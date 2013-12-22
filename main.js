@@ -26,14 +26,14 @@ d3.tsv("data/CS.tsv", function(error, cs) {
     }
   });
 
-  var width = 960,
-      height = 500;
+  var width = 2000,
+      height = 2000;
 
   var force = d3.layout.force()
       .nodes(d3.values(nodes))
       .links(links)
       .size([width, height])
-      .linkDistance(60)
+      .linkDistance(100)
       .charge(-300)
       .on("tick", tick)
       .start();

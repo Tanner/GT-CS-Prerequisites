@@ -5,14 +5,25 @@ d3.tsv("data/CS.tsv", function(error, cs) {
   var nodes = {};
 
   // Compute the distinct nodes from the links.
-  cs.forEach(function(course) {
-    var link = {};
-    var course_number = course["Course"];
+  var preReqRegex = /[A-Z]* [0-9]{4}/g;
 
-    link.source = nodes[course_number] || (nodes[course_number] = {name: course_number});
-    link.target = nodes[course_number] || (nodes[course_number] = {name: course_number});
-    
-    links.push(link);
+  cs.forEach(function(course) {
+    var course_number = course["Course"];
+    var preReqs = course["Prerequisites"].match(preReqRegex);
+
+    if (preReqs == null || preReqs.length == 0) {
+      return;
+    }
+
+    for (var i = 0; i < preReqs.length; i++) {
+      var req = preReqs[i];
+      var link = {};
+
+      link.source = nodes[req] || (nodes[req] = {name: req});
+      link.target = nodes[course_number] || (nodes[course_number] = {name: course_number});
+      
+      links.push(link);
+    }
   });
 
   var width = 960,

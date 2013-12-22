@@ -54,10 +54,23 @@ var svg = d3.select("body").append("svg")
     .attr("width", width)
     .attr("height", height);
 
+svg.append("defs")
+    .append("marker")
+    .attr("id", "marker")
+    .attr("viewBox", "0 -5 10 10")
+    .attr("refX", 19)
+    .attr("refY", 0)
+    .attr("markerWidth", 6)
+    .attr("markerHeight", 6)
+    .attr("orient", "auto")
+  .append("path")
+    .attr("d", "M0,-5L10,0L0,5");
+
 var link = svg.selectAll(".link")
     .data(force.links())
   .enter().append("line")
-    .attr("class", "link");
+    .attr("class", function(d) { return "link "; })
+    .attr("marker-end", function(d) { return "url(#marker)"; });
 
 var node = svg.selectAll(".node")
     .data(force.nodes())

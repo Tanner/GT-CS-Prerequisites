@@ -4,6 +4,8 @@ d3.tsv("data/CS.tsv", function(error, cs) {
   var links = [];
   var nodes = {};
 
+  var color = d3.scale.category10();
+
   // Compute the distinct nodes from the links.
   var preReqRegex = /[A-Z]* [0-9]{4}/g;
 
@@ -19,9 +21,9 @@ d3.tsv("data/CS.tsv", function(error, cs) {
       var req = preReqs[i];
       var link = {};
 
-      link.source = nodes[req] || (nodes[req] = {name: req});
-      link.target = nodes[course_number] || (nodes[course_number] = {name: course_number});
-      
+      link.source = nodes[req] || (nodes[req] = createNode(req));
+      link.target = nodes[course_number] || (nodes[course_number] = createNode(course_number));
+
       links.push(link);
     }
   });
@@ -69,7 +71,10 @@ d3.tsv("data/CS.tsv", function(error, cs) {
       .call(force.drag);
 
   node.append("circle")
-      .attr("r", 8);
+      .attr("r", 8)
+      .style("fill", function(d) {
+        return color(d.school);
+      });
 
   node.append("text")
       .attr("x", 12)
@@ -87,6 +92,13 @@ d3.tsv("data/CS.tsv", function(error, cs) {
         .attr("transform", function(d) { return "translate(" + d.x + "," + d.y + ")"; });
   }
 });
+
+function createNode(course) {
+  return {
+    name: course,
+    school: course.split(' ')[0]
+  }
+}
 
 function mouseover() {
   d3.select(this).select("circle").transition()

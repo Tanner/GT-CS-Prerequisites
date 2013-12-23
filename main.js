@@ -47,6 +47,7 @@ d3.tsv("data/CS.tsv", function(error, cs) {
   svg.append("defs")
       .append("marker")
       .attr("id", "marker")
+      .attr("class", "marker")
       .attr("viewBox", "0 -5 10 10")
       .attr("refX", 19)
       .attr("refY", 0)

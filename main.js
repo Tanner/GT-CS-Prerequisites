@@ -6,27 +6,144 @@ d3.tsv("data/CS.tsv", function(error, cs) {
 
   var color = d3.scale.category10();
 
-  // Compute the distinct nodes from the links.
-  var preReqRegex = /[A-Z]* [0-9]{4}/g;
+  var courses = {};
 
+  // Parse out prerequisites
   cs.forEach(function(course) {
-    var course_number = course["Course"];
-    var preReqs = course["Prerequisites"].match(preReqRegex);
+    var currentCourse = {
+      identifier: course["Course"],
+      name: course["Course"],
+      school: course["Course"].split(' ')[0],
+      type: "course",
+      requires: []
+    }
 
-    if (preReqs == null || preReqs.length == 0) {
+    // Parse the prerequisite string
+    var preReqsString = course["Prerequisites"].split(',');
+    var stack = [];
+
+    if (preReqsString.length == 0) {
       return;
     }
 
-    for (var i = 0; i < preReqs.length; i++) {
-      var req = preReqs[i];
+    for (var i = 0; i < preReqsString.length; i++) {
+      var element = preReqsString[i];
+
+      if (element.length == 0) {
+        continue;
+      }
+
+      if (element != "&" && element != "|") {
+        stack.push({
+          identifier: element,
+          name: element,
+          school: element.split(' ')[0],
+          type: "course"
+        });
+
+      } else {
+        var courseA = stack.pop();
+        var courseB = stack.pop();
+
+        if (element == '&') {
+          var and = {
+            type: "and",
+            requires: [ courseA, courseB ]
+          }
+
+          stack.push(and);
+        } else if (element == '|') {
+          if (courseA.type == "or" && courseB.type == "or") {
+            var or = courseA;
+
+            or.requires = or.requires.concat(courseB.requires)
+
+            stack.push(or);
+          } else if (courseA.type == "or" || courseB.type == "or") {
+            var or = courseA;
+            var other = courseB;
+
+            if (courseB.type == "or") {
+              or = courseB;
+              other = courseA;
+            }
+
+            or.requires.push(other);
+
+            stack.push(or);
+          } else {
+            var or = {
+              type: "or",
+              requires: [courseA, courseB]
+            }
+
+            stack.push(or);
+          }
+        }
+      }
+    }
+
+    currentCourse.requires = stack;
+
+    courses[new String(currentCourse.identifier)] = currentCourse;
+  });
+
+  console.log(courses);
+
+  // Compute the distinct nodes from the links.
+  for (var property in courses) {
+    var currentCourse = courses[property];
+    var requires = currentCourse.requires;
+
+    createLinksForRequirements(currentCourse, currentCourse);
+  }
+
+  function createLinksForRequirements(source, course) {
+    var courseRequires = course.type == "course" ? course.requires : [course];
+
+    if (courseRequires) {
+      for (var i = 0; i < courseRequires.length; i++) {
+        var require = courseRequires[i];
+
+        if (require.type == "or") {
+          var or = {
+            identifier: Math.random() * 1000000,
+            name: "or",
+            type: "or"
+          }
+
+          for (var j = 0; j < require.requires.length; j++) {
+            if (require.requires[j].type == "course") {
+              links.push(createLink(require.requires[j], or));
+            } else {
+              createLinksForRequirements(or, require.requires[j]);
+            }
+          }
+
+          links.push(createLink(or, source));
+        } else if (require.type == "and") {
+          for (var j = 0; j < require.requires.length; j++) {
+            if (require.requires[j].type == "course") {
+              links.push(createLink(require.requires[j], source));
+            } else {
+              createLinksForRequirements(source, require.requires[j]);
+            }
+          }
+        }
+      }
+    } else {
+      links.push(createLink(course, source));
+    }
+  }
+
+  function createLink(sourceCourse, targetCourse) {
       var link = {};
 
-      link.source = nodes[req] || (nodes[req] = createNode(req));
-      link.target = nodes[course_number] || (nodes[course_number] = createNode(course_number));
+      link.source = nodes[sourceCourse.identifier] || (nodes[sourceCourse.identifier] = sourceCourse);
+      link.target = nodes[targetCourse.identifier] || (nodes[targetCourse.identifier] = targetCourse);
 
-      links.push(link);
-    }
-  });
+      return link;
+  }
 
   var width = 2000,
       height = 2000;

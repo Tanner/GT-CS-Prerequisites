@@ -145,8 +145,8 @@ d3.tsv("data/CS.tsv", function(error, cs) {
       return link;
   }
 
-  var width = 2000,
-      height = 2000;
+  var width = 1500,
+      height = 1500;
 
   var force = d3.layout.force()
       .nodes(d3.values(nodes))
@@ -219,13 +219,17 @@ function createNode(course) {
 }
 
 function mouseover() {
+  d3.selectAll("circle").transition()
+      .duration(400)
+      .attr("r", 4);
+
   d3.select(this).select("circle").transition()
-      .duration(750)
-      .attr("r", 16);
+      .duration(400)
+      .attr("r", 8);
 }
 
 function mouseout() {
-  d3.select(this).select("circle").transition()
-      .duration(750)
+  d3.selectAll("circle").transition()
+      .duration(400)
       .attr("r", 8);
 }
